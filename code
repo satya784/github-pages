@@ -1,0 +1,36 @@
+import os
+import paramiko
+from datetime import datetime
+
+# Configuration
+local_directory = "/path/to/local/directory"
+remote_host = "remote.server.com"
+remote_user = "username"
+remote_password = "password"
+remote_directory = "/path/to/remote/directory"
+
+def backup_files():
+    try:
+        # Connect to remote server
+        ssh = paramiko.SSHClient()
+        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        ssh.connect(remote_host, username=remote_user, password=remote_password)
+
+        sftp = ssh.open_sftp()
+        for root, dirs, files in os.walk(local_directory):
+            for file in files:
+                local_path = os.path.join(root, file)
+                remote_path = os.path.join(remote_directory, file)
+                sftp.put(local_path, remote_path)
+        
+        sftp.close()
+        ssh.close()
+        return "Backup successful!"
+    except Exception as e:
+        return f"Backup failed: {str(e)}"
+
+if __name__ == "__main__":
+    report = backup_files()
+    print(report)
+    with open("backup_report.log", "a") as log_file:
+        log_file.write(f"{datetime.now()}: {report}\n")
